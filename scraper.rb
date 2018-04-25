@@ -1,25 +1,31 @@
-# This is a template for a Ruby scraper on morph.io (https://morph.io)
-# including some code snippets below that you should find helpful
-
-# require 'scraperwiki'
-# require 'mechanize'
-#
-# agent = Mechanize.new
-#
-# # Read in a page
-# page = agent.get("http://foo.com")
-#
-# # Find somehing on the page using css selectors
-# p page.at('div.content')
-#
-# # Write out to the sqlite database using scraperwiki library
-# ScraperWiki.save_sqlite(["name"], {"name" => "susan", "occupation" => "software developer"})
-#
-# # An arbitrary query against the database
-# ScraperWiki.select("* from data where 'name'='peter'")
-
-# You don't have to do things with the Mechanize or ScraperWiki libraries.
-# You can use whatever gems you want: https://morph.io/documentation/ruby
-# All that matters is that your final data is written to an SQLite database
-# called "data.sqlite" in the current working directory which has at least a table
-# called "data".
+require 'open-uri'
+require 'nokogiri'
+ 
+PAGE_URL = "http://pdadb.net/m/index.php?m=specs&id="
+ 
+File.open("data.txt", 'w') do |file|
+  (0..9835).each do |count|
+    page = Nokogiri::HTML(open(PAGE_URL + count.to_s))
+ 
+    header = page.css("h2")
+    title = header.text.sub "Specifications", ""
+    title.strip!
+ 
+    data = page.css("tr")
+ 
+    date = ""
+    resolution = ""
+    data.each{ |chr|
+      if chr.text["Display Resolution:"] then
+        var = chr.text.sub "Display Resolution:", ""
+        date = var.strip
+      elsif chr.text["Release Date:"] then
+        var = chr.text.sub "Release Date:", ""
+        resolution = var.strip
+      end
+    }
+ 
+    file.puts "#{count}, #{title}, #{date}, #{resolution}"
+    sleep(0.3)
+  end
+end
